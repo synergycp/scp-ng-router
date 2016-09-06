@@ -17,6 +17,7 @@
     // provider access level
     var result = {
       basepath: basepath,
+      themepath: themepath,
       resolveFor: resolveFor,
       dummyTemplate: '<ui-view />',
       package: makePackage,
