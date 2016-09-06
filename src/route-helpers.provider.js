@@ -61,6 +61,10 @@
       return 'app/' + uri;
     }
 
+    function themepath(uri) {
+      return 'vendor/node_modules/scp-angle/' + uri;
+    }
+
     function Package(name) {
       var pkg = this;
       var url = 'pkg/' + name + '/';
