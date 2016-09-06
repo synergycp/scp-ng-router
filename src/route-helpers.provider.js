@@ -63,7 +63,7 @@
     }
 
     function themepath(uri) {
-      return 'vendor/node_modules/scp-angle/' + uri;
+      return 'vendor/node_modules/scp-angle/dist/' + uri;
     }
 
     function Package(name) {
