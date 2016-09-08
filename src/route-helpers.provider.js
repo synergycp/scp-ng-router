@@ -13,7 +13,7 @@
   /**
    * @ngInject
    */
-  function RouteHelpersProvider(APP_REQUIRES, ApiProvider, $stateProvider) {
+  function RouteHelpersProvider(APP_REQUIRES, ApiProvider, $stateProvider, _) {
     // provider access level
     var result = {
       basepath: basepath,
@@ -21,13 +21,15 @@
       resolveFor: resolveFor,
       dummyTemplate: '<ui-view />',
       package: makePackage,
+      $get: makeService,
     };
 
-    // controller access level
+    return result;
+
     /**
      * @ngInject
      */
-    result.$get = function ($sce) {
+    function makeService($sce) {
       var service = _.clone(result);
       service.trusted = trusted;
       service.package = wrappedPackage;
@@ -49,9 +51,7 @@
           return trusted(pkg.asset(path));
         }
       }
-    };
-
-    return result;
+    }
 
     function makePackage(name) {
       return new Package(name);
@@ -63,7 +63,7 @@
     }
 
     function themepath(uri) {
-      return 'vendor/node_modules/scp-angle/dist/' + uri;
+      return 'vendor/scp-angle/dist/' + uri;
     }
 
     function Package(name) {
@@ -129,12 +129,17 @@
             return promise.then(_arg);
           }
 
-          lastPromise = promise.then(loadArg.bind(null, _arg, lastPromise));
+          lastPromise = promise
+            .then(loadArg.bind(null, _arg, lastPromise))
+            .catch(function (error) {
+              console.error('Error loading: ', _arg, error);
+            })
+            ;
 
           return lastPromise;
         }
 
-        function loadArg(_arg, lastPromise) {
+        function loadArg(_arg, prevPromise) {
           var split = _arg.split(':');
           var type = split.shift();
           var load = split.join(':');
@@ -149,9 +154,13 @@
           case 'raw':
             return $ocLazyLoad.load(load);
           case 'after':
-            return lastPromise.then(function () {
-              return loadArg(load);
-            });
+            var promise = prevPromise.then(loadAfter);
+
+            return promise;
+
+            function loadAfter() {
+              return loadArg(load, promise);
+            }
           }
 
           // if is a module, pass the name. If not, pass the array
