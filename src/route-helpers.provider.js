@@ -29,12 +29,19 @@
     /**
      * @ngInject
      */
-    function makeService($sce) {
+    function makeService($sce, $translateModuleLoader, $translate) {
       var service = _.clone(result);
       service.trusted = trusted;
       service.package = wrappedPackage;
+      service.loadLang = loadLang;
 
       return service;
+
+      function loadLang() {
+        _.map(arguments, _.ary($translateModuleLoader.addPart, 1));
+
+        return $translate.refresh();
+      }
 
       function trusted(path) {
         return $sce.trustAsResourceUrl(path);
@@ -110,9 +117,8 @@
         $q,
         $timeout,
         $injector,
-        $translate,
         $ocLazyLoad,
-        $translateModuleLoader
+        RouteHelpers
       ) {
         var lastPromise;
 
@@ -146,9 +152,7 @@
 
           switch (type) {
           case 'lang':
-            $translateModuleLoader.addPart(load);
-
-            return $translate.refresh();
+            return RouteHelpers.loadLang(load);
           case 'inject':
             return $injector.get(load)();
           case 'raw':
