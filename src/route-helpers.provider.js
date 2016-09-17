@@ -33,6 +33,7 @@
       var service = _.clone(result);
       service.trusted = trusted;
       service.package = wrappedPackage;
+      service.export = makeExport;
       service.loadLang = loadLang;
 
       return service;
@@ -57,6 +58,28 @@
         function trustedAsset(path) {
           return trusted(pkg.asset(path));
         }
+      }
+    }
+
+    function makeExport(name) {
+      return new Export(name);
+    }
+
+    function Export(name) {
+      var exp = this;
+      var url = 'vendor/' + name;
+
+      exp.root = root;
+      exp.path = path;
+
+      function root(folder) {
+        url = path(folder);
+
+        return exp;
+      }
+
+      function path(file) {
+        return url + '/' + file;
       }
     }
 
