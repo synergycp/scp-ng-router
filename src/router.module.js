@@ -6,7 +6,8 @@
       'ui.router',
       'oc.lazyLoad',
       'ct.ui.router.extras',
-  
+
       'scp.router.lazyload',
+      'scp.router.url',
     ]);
 })();

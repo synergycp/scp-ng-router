@@ -13,9 +13,11 @@
   /**
    * @ngInject
    */
-  function RouteHelpersProvider(APP_REQUIRES, ApiProvider, $stateProvider, _) {
+  function RouteHelpersProvider(APP_REQUIRES, ApiProvider, UrlProvider, $stateProvider, _) {
     // provider access level
     var result = {
+      url: UrlProvider.map,
+      state: $stateProvider.state,
       basepath: basepath,
       themepath: themepath,
       resolveFor: resolveFor,
