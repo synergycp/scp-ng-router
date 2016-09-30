@@ -31,7 +31,7 @@
     /**
      * @ngInject
      */
-    function makeService($sce, $translateModuleLoader, $translate) {
+    function makeService($sce, $translateModuleLoader, $translate, Api) {
       var service = _.clone(result);
       service.trusted = trusted;
       service.package = wrappedPackage;
@@ -54,8 +54,13 @@
         var pkg = makePackage.apply(null, arguments);
 
         pkg.trustedAsset = trustedAsset;
+        pkg.api = api;
 
         return pkg;
+
+        function api() {
+          return Api.all('pkg').all(pkg.name);
+        }
 
         function trustedAsset(path) {
           return trusted(pkg.asset(path));
@@ -102,6 +107,7 @@
       var pkg = this;
       var url = 'pkg/' + name + '/';
 
+      pkg.name = name;
       pkg.asset = asset;
       pkg.lang = lang;
       pkg.state = state;
