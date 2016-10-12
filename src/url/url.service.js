@@ -66,7 +66,7 @@
     }
 
     function getMappingResult(mapping, apiUrl) {
-      var result = mapping.result(apiUrl);
+      var result = mapping.result(apiUrl, $state);
 
       if (!result) {
         return;
@@ -104,7 +104,7 @@
 
     /////////
 
-    function result(apiUrl) {
+    function result(apiUrl, $state) {
       var matches = apiUrl.match(re);
 
       if (!matches) {
@@ -112,8 +112,15 @@
       }
 
       matches.shift();
+      matches.unshift($state);
 
-      return callback.apply(mapping, matches);
+      var result = callback.apply(mapping, matches);
+
+      if (result && result.charAt(0) === '#') {
+        result = result.substring(1);
+      }
+
+      return result;
     }
   }
 })();

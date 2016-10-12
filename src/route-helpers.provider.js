@@ -13,10 +13,11 @@
   /**
    * @ngInject
    */
-  function RouteHelpersProvider(APP_REQUIRES, ApiProvider, UrlProvider, $stateProvider, _) {
+  function RouteHelpersProvider(APP_REQUIRES, ApiProvider, SsoUrlProvider, UrlProvider, $stateProvider, _) {
     // provider access level
-    var result = {
-      url: UrlProvider.map,
+    var RouteHelpersProvider = {
+      sso: SsoUrlProvider,
+      url: UrlProvider,
       state: $stateProvider.state,
       basepath: basepath,
       themepath: themepath,
@@ -26,13 +27,13 @@
       $get: makeService,
     };
 
-    return result;
+    return RouteHelpersProvider;
 
     /**
      * @ngInject
      */
     function makeService($sce, $translateModuleLoader, $translate, Api) {
-      var service = _.clone(result);
+      var service = _.clone(RouteHelpersProvider);
       service.trusted = trusted;
       service.package = wrappedPackage;
       service.export = makeExport;
@@ -106,19 +107,80 @@
     function Package(name) {
       var pkg = this;
       var url = 'pkg/' + name + '/';
+      var hasBaseState;
+
+      pkg.baseState = 'app.pkg.' + name;
 
       pkg.name = name;
       pkg.asset = asset;
       pkg.lang = lang;
       pkg.state = state;
       pkg.raw = raw;
+      pkg.url = makeUrl;
+      pkg.sso = sso;
+
+      function sso(type, callback) {
+        function doCallback() {
+          var args = _.map(arguments);
+          args[0] = wrap$state(args[0]);
+          return callback.apply(callback, args);
+        }
+
+        SsoUrlProvider.map('pkg.' + name + '.' + type, doCallback);
+      }
+
+      function makeUrl(path, callback) {
+        function doCallback() {
+          var args = _.map(arguments);
+          args[0] = wrap$state(args[0]);
+          return callback.apply(callback, args);
+        }
+
+        UrlProvider.map(url + path, doCallback);
+
+        return pkg;
+      }
+
+      function wrap$state(unwrapped$state) {
+        var $state = _.clone(unwrapped$state);
+        $state.href = href;
+
+        return $state;
+
+        function href() {
+          var args = _.map(arguments);
+
+          args[0] = pkg.baseState + '.' + args[0];
+
+          return unwrapped$state.href.apply(unwrapped$state, args);
+        }
+      }
 
       function lang(language) {
         return 'lang:pkg:' + name + ':' + language;
       }
 
+      function makeBaseState(opts) {
+        $stateProvider.state(
+          pkg.baseState,
+          _.defaults({}, opts || {}, {
+            url: '/'+name,
+            abstract: true,
+            template: RouteHelpersProvider.dummyTemplate,
+          })
+        );
+      }
+
       function state(stateName, opts) {
-        $stateProvider.state(stateName, opts);
+        if (!stateName) {
+          makeBaseState(opts);
+          return pkg;
+        }
+
+        $stateProvider.state(
+          pkg.baseState + '.' + stateName,
+          opts
+        );
 
         return pkg;
       }
@@ -170,8 +232,7 @@
             .then(loadArg.bind(null, _arg, lastPromise))
             .catch(function (error) {
               console.error('Error loading: ', _arg, error);
-            })
-            ;
+            });
 
           return lastPromise;
         }
