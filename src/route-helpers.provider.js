@@ -13,25 +13,39 @@
   /**
    * @ngInject
    */
-  function RouteHelpersProvider(APP_REQUIRES, ApiProvider, $stateProvider) {
+  function RouteHelpersProvider(APP_REQUIRES, ApiProvider, SsoUrlProvider, UrlProvider, $stateProvider, _) {
     // provider access level
-    var result = {
+    var RouteHelpersProvider = {
+      sso: SsoUrlProvider,
+      url: UrlProvider,
+      state: $stateProvider.state,
       basepath: basepath,
+      themepath: themepath,
       resolveFor: resolveFor,
       dummyTemplate: '<ui-view />',
       package: makePackage,
+      $get: makeService,
     };
 
-    // controller access level
+    return RouteHelpersProvider;
+
     /**
      * @ngInject
      */
-    result.$get = function ($sce) {
-      var service = _.clone(result);
+    function makeService($sce, $translateModuleLoader, $translate, Api) {
+      var service = _.clone(RouteHelpersProvider);
       service.trusted = trusted;
       service.package = wrappedPackage;
+      service.export = makeExport;
+      service.loadLang = loadLang;
 
       return service;
+
+      function loadLang() {
+        _.map(arguments, _.ary($translateModuleLoader.addPart, 1));
+
+        return $translate.refresh();
+      }
 
       function trusted(path) {
         return $sce.trustAsResourceUrl(path);
@@ -41,16 +55,41 @@
         var pkg = makePackage.apply(null, arguments);
 
         pkg.trustedAsset = trustedAsset;
+        pkg.api = api;
 
         return pkg;
+
+        function api() {
+          return Api.all('pkg').all(pkg.name);
+        }
 
         function trustedAsset(path) {
           return trusted(pkg.asset(path));
         }
       }
-    };
+    }
 
-    return result;
+    function makeExport(name) {
+      return new Export(name);
+    }
+
+    function Export(name) {
+      var exp = this;
+      var url = 'vendor/' + name;
+
+      exp.root = root;
+      exp.path = path;
+
+      function root(folder) {
+        url = path(folder);
+
+        return exp;
+      }
+
+      function path(file) {
+        return url + '/' + file;
+      }
+    }
 
     function makePackage(name) {
       return new Package(name);
@@ -61,21 +100,87 @@
       return 'app/' + uri;
     }
 
+    function themepath(uri) {
+      return 'vendor/scp-angle/dist/' + uri;
+    }
+
     function Package(name) {
       var pkg = this;
       var url = 'pkg/' + name + '/';
+      var hasBaseState;
 
+      pkg.baseState = 'app.pkg.' + name;
+
+      pkg.name = name;
       pkg.asset = asset;
       pkg.lang = lang;
       pkg.state = state;
       pkg.raw = raw;
+      pkg.url = makeUrl;
+      pkg.sso = sso;
+
+      function sso(type, callback) {
+        function doCallback() {
+          var args = _.map(arguments);
+          args[0] = wrap$state(args[0]);
+          return callback.apply(callback, args);
+        }
+
+        SsoUrlProvider.map('pkg.' + name + '.' + type, doCallback);
+      }
+
+      function makeUrl(path, callback) {
+        function doCallback() {
+          var args = _.map(arguments);
+          args[0] = wrap$state(args[0]);
+          return callback.apply(callback, args);
+        }
+
+        UrlProvider.map(url + path, doCallback);
+
+        return pkg;
+      }
+
+      function wrap$state(unwrapped$state) {
+        var $state = _.clone(unwrapped$state);
+        $state.href = href;
+
+        return $state;
+
+        function href() {
+          var args = _.map(arguments);
+
+          args[0] = pkg.baseState + '.' + args[0];
+
+          return unwrapped$state.href.apply(unwrapped$state, args);
+        }
+      }
 
       function lang(language) {
         return 'lang:pkg:' + name + ':' + language;
       }
 
+      function makeBaseState(opts) {
+        $stateProvider.state(
+          pkg.baseState,
+          _.defaults({}, opts || {}, {
+            url: '/'+name,
+            abstract: true,
+            template: RouteHelpersProvider.dummyTemplate,
+          })
+        );
+      }
+
       function state(stateName, opts) {
-        $stateProvider.state(stateName, opts);
+        if (!stateName) {
+          makeBaseState(opts);
+          return pkg;
+        }
+
+        $stateProvider.state(
+          pkg.baseState + '.' + stateName,
+          opts
+        );
 
         return pkg;
       }
@@ -105,9 +210,8 @@
         $q,
         $timeout,
         $injector,
-        $translate,
         $ocLazyLoad,
-        $translateModuleLoader
+        RouteHelpers
       ) {
         var lastPromise;
 
@@ -124,29 +228,35 @@
             return promise.then(_arg);
           }
 
-          lastPromise = promise.then(loadArg.bind(null, _arg, lastPromise));
+          lastPromise = promise
+            .then(loadArg.bind(null, _arg, lastPromise))
+            .catch(function (error) {
+              console.error('Error loading: ', _arg, error);
+            });
 
           return lastPromise;
         }
 
-        function loadArg(_arg, lastPromise) {
+        function loadArg(_arg, prevPromise) {
           var split = _arg.split(':');
           var type = split.shift();
           var load = split.join(':');
 
           switch (type) {
           case 'lang':
-            $translateModuleLoader.addPart(load);
-
-            return $translate.refresh();
+            return RouteHelpers.loadLang(load);
           case 'inject':
             return $injector.get(load)();
           case 'raw':
             return $ocLazyLoad.load(load);
           case 'after':
-            return lastPromise.then(function () {
-              return loadArg(load);
-            });
+            var promise = prevPromise.then(loadAfter);
+
+            return promise;
+
+            function loadAfter() {
+              return loadArg(load, promise);
+            }
           }
 
           // if is a module, pass the name. If not, pass the array

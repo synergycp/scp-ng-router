@@ -25,7 +25,7 @@ var build = {
   dir: './build',
   src: {
     js: 'src.min.js',
-    tpls: 'tpls.min.js',
+    tpls: 'templates.js',
   },
   vendor: {
     js: 'vendor.min.js',
@@ -45,6 +45,8 @@ var pugOptions = {
   basedir: './',
 };
 var tplCacheOptions = {
+  root: 'scp/router',
+  module: 'scp.router',
 };
 
 gulp.task('scripts', function () {
@@ -107,8 +109,8 @@ gulp.task('merge', function () {
   return gulp
     .src([
       build.dir +'/'+build.vendor.js,
-      build.dir +'/'+build.src.tpls,
       build.dir +'/'+build.src.js,
+      build.dir +'/'+build.src.tpls,
     ])
     .pipe($.concat(build.dist.js))
     .pipe(gulp.dest('./'))

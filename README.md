@@ -1,1 +1,1 @@
-# scp-angular-core
+# Synergy Control Panel Angular Router
