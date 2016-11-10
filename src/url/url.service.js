@@ -92,7 +92,7 @@
     }
 
     function unknown(apiUrl) {
-      throw new Error('URL does not match any known URLs: ' + apiUrl);
+      console.warning('URL does not match any known URLs: ' + apiUrl);
     }
   }
 
