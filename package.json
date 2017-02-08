@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://github.com/cabloo/scp-ng-router.git"
+    "url": "git+ssh://github.com/synergycp/scp-ng-router.git"
   },
   "author": "Synergy Control Panel",
   "license": "UNLICENSED",
   "bugs": {
-    "url": "https://github.com/cabloo/scp-ng-router/issues"
+    "url": "https://github.com/synergycp/scp-ng-router/issues"
   },
-  "homepage": "https://github.com/cabloo/scp-ng-router#readme",
+  "homepage": "https://github.com/synergycp/scp-ng-router#readme",
   "devDependencies": {
     "angular-ui-router": "^0.3.1",
     "gulp": "^3.9.1",
