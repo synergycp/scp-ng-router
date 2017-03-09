@@ -100,8 +100,15 @@
       return 'app/' + uri;
     }
 
+    function transformUrl(url) {
+      APP_REQUIRES.urlTransformers.map(function (fn) {
+        url = fn(url);
+      })
+      return url;
+    }
+
     function themepath(uri) {
-      return 'vendor/scp-angle/dist/' + uri;
+      return transformUrl('vendor/scp-angle/dist/' + uri);
     }
 
     function Package(name) {
@@ -243,20 +250,22 @@
           var load = split.join(':');
 
           switch (type) {
-          case 'lang':
-            return RouteHelpers.loadLang(load);
-          case 'inject':
-            return $injector.get(load)();
-          case 'raw':
-            return $ocLazyLoad.load(load);
-          case 'after':
-            var promise = prevPromise.then(loadAfter);
+            case 'lang':
+              updateReferences(load);
+              return RouteHelpers.loadLang(load);
+            case 'inject':
+              return $injector.get(load)();
+            case 'raw':
+              updateReferences(load);
+              return $ocLazyLoad.load(load);
+            case 'after':
+              var promise = prevPromise.then(loadAfter);
 
-            return promise;
+              return promise;
 
-            function loadAfter() {
-              return loadArg(load, promise);
-            }
+              function loadAfter() {
+                return loadArg(load, promise);
+              }
           }
 
           // if is a module, pass the name. If not, pass the array
@@ -268,7 +277,8 @@
               'Route resolve: Bad resource name [' + _arg + ']'
             );
           }
-
+          
+          updateReferences(whatToLoad);
           // finally, return a promise
           return $ocLazyLoad.load(whatToLoad);
         }
@@ -289,6 +299,19 @@
 
           return APP_REQUIRES.scripts &&
             APP_REQUIRES.scripts[name];
+        }
+
+        function updateReferences(whatToLoad) {
+          var files = null;
+          if (_.isObject(whatToLoad) && _.isArray(whatToLoad.files)) {
+            files = whatToLoad.files;
+          } else if (_.isArray(whatToLoad)) {
+            files = whatToLoad;
+          } else return whatToLoad;
+          files.map(function (fileUrl, index) {
+            files[index] = transformUrl(files[index]);
+          });
+          return whatToLoad;
         }
       }
     }
