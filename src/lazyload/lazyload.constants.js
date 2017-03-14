@@ -8,6 +8,8 @@
       scripts: {},
       // Angular based script (use the right module name)
       modules: [],
+      // functions for transforming urls
+      urlTransformers: []
     });
 
 })();
