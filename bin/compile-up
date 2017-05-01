@@ -1,0 +1,13 @@
+#!/bin/bash
+
+od=$(pwd)
+gulp
+
+cd ../angle
+gulp merge:vendor
+
+cd ../../app/admin/default
+gulp vendor
+
+cd $od
+
