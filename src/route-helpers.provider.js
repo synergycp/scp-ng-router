@@ -60,7 +60,8 @@
         return pkg;
 
         function api() {
-          return Api.all('pkg').all(pkg.name);
+          return Api.all('pkg')
+            .all(pkg.name);
         }
 
         function trustedAsset(path) {
@@ -114,7 +115,6 @@
     function Package(name) {
       var pkg = this;
       var url = 'pkg/' + name + '/';
-      var hasBaseState;
 
       pkg.baseState = 'app.pkg.' + name;
 
@@ -171,7 +171,7 @@
         $stateProvider.state(
           pkg.baseState,
           _.defaults({}, opts || {}, {
-            url: '/'+name,
+            url: '/' + name,
             abstract: true,
             template: RouteHelpersProvider.dummyTemplate,
           })
@@ -193,7 +193,7 @@
       }
 
       function asset(path) {
-        return ApiProvider.baseUrl() + url + path;
+        return ApiProvider.baseUrl() + '/static/' + url + path;
       }
 
       function raw(path) {
@@ -215,7 +215,6 @@
        */
       function resolveArgs(
         $q,
-        $timeout,
         $injector,
         $ocLazyLoad,
         RouteHelpers
@@ -248,6 +247,11 @@
           var split = _arg.split(':');
           var type = split.shift();
           var load = split.join(':');
+          var promise;
+
+          function loadAfter() {
+            return loadArg(load, promise);
+          }
 
           switch (type) {
             case 'lang':
@@ -259,13 +263,7 @@
               updateReferences(load);
               return $ocLazyLoad.load(load);
             case 'after':
-              var promise = prevPromise.then(loadAfter);
-
-              return promise;
-
-              function loadAfter() {
-                return loadArg(load, promise);
-              }
+              return promise = prevPromise.then(loadAfter);
           }
 
           // if is a module, pass the name. If not, pass the array
@@ -277,7 +275,7 @@
               'Route resolve: Bad resource name [' + _arg + ']'
             );
           }
-          
+
           updateReferences(whatToLoad);
           // finally, return a promise
           return $ocLazyLoad.load(whatToLoad);
@@ -307,7 +305,9 @@
             files = whatToLoad.files;
           } else if (_.isArray(whatToLoad)) {
             files = whatToLoad;
-          } else return whatToLoad;
+          } else {
+            return whatToLoad;
+          }
           files.map(function (fileUrl, index) {
             files[index] = transformUrl(files[index]);
           });

@@ -3,11 +3,8 @@
 od=$(pwd)
 gulp
 
-cd ../angle
-gulp merge:vendor
-
-cd ../../app/admin/default
-gulp vendor
+cd ../scp-angle
+./bin/compile-up
 
 cd $od
 
