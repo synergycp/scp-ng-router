@@ -22,7 +22,7 @@
       basepath: basepath,
       themepath: themepath,
       resolveFor: resolveFor,
-      dummyTemplate: '<ui-view />',
+      dummyTemplate: '<ui-view ng-class="app.viewAnimation" />',
       package: makePackage,
       $get: makeService,
     };
