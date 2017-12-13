@@ -1,6 +1,6 @@
 {
   "name": "scp-ng-router",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Synergy Control Panel Angular router files",
   "main": "dist.min.js",
   "scripts": {
