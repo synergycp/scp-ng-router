@@ -76,11 +76,19 @@
     }
 
     function getBaseUrl() {
-      return (baseUrl = baseUrl ||
-        $state.href(
-          getBaseStateOrFail()
-        )
-      );
+      return baseUrl = baseUrl || makeBaseUrl();
+    }
+
+    function makeBaseUrl() {
+      var url = $state.href(
+        getBaseStateOrFail()
+      ).split('?')[0];
+
+      if (url === '#') {
+        url += '/';
+      }
+
+      return url;
     }
 
     function getBaseStateOrFail() {
