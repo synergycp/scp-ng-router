@@ -43,6 +43,7 @@
 
       function loadLang() {
         _.map(arguments, _.ary($translateModuleLoader.addPart, 1));
+        console.log('loading ', arguments);
 
         return $translate.refresh();
       }
@@ -56,6 +57,15 @@
 
         pkg.trustedAsset = trustedAsset;
         pkg.api = api;
+        pkg.loadLang = loadLang;
+
+        /**
+         * @param {string} language
+         * @return {Promise}
+         */
+        function loadLang(language) {
+          return service.loadLang(pkg.getLangName(language));
+        }
 
         return pkg;
 
@@ -125,6 +135,7 @@
       pkg.raw = raw;
       pkg.url = makeUrl;
       pkg.sso = sso;
+      pkg.getLangName = getLangName;
 
       function sso(type, callback) {
         function doCallback() {
@@ -163,8 +174,20 @@
         }
       }
 
+      /**
+       * @param {string} language
+       * @return {string} Syntax that can be passed to `RouteHelpersProvider.resolveFor`
+       */
       function lang(language) {
-        return 'lang:pkg:' + name + ':' + language;
+        return 'lang:'+getLangName(language);
+      }
+
+      /**
+       * @param {string} language
+       * @return {string} Syntax that can be passed to `RouteHelpers.loadLang`.
+       */
+      function getLangName(language) {
+        return 'pkg:' + name + ':' + language;
       }
 
       function makeBaseState(opts) {
