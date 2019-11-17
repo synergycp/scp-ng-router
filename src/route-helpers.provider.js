@@ -43,7 +43,6 @@
 
       function loadLang() {
         _.map(arguments, _.ary($translateModuleLoader.addPart, 1));
-        console.log('loading ', arguments);
 
         return $translate.refresh();
       }
