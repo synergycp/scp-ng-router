@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 od=$(pwd)
-gulp
+./node_modules/.bin/gulp || exit 1
 
 cd ../scp-angle
 ./bin/compile-up
