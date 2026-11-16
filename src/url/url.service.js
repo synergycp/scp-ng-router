@@ -56,13 +56,23 @@
     //////////
 
     function get(apiUrl) {
+      var path = getPath(apiUrl);
+
       return _.reduce(mappings, reduceResult, null) ||
         unknown(apiUrl)
         ;
 
       function reduceResult (result, mapping) {
-        return result || getMappingResult(mapping, apiUrl);
+        return result || getMappingResult(mapping, path);
       }
+    }
+
+    /**
+     * Mappings describe API paths, so the scheme and host are removed first.
+     * Otherwise a word in the hostname (e.g. "server") matches a mapping.
+     */
+    function getPath(apiUrl) {
+      return (apiUrl || '').replace(/^[a-z][a-z0-9+.-]*:\/\/[^\/?#]*/i, '');
     }
 
     function getMappingResult(mapping, apiUrl) {
